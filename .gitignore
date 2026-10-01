@@ -29,3 +29,8 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python and Jupyter generated files
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+

@@ -1,0 +1,19 @@
+# Core data science  (Python 3.13 compatible, pre-built wheels available)
+pandas>=2.2.3
+numpy>=2.1.0
+scipy>=1.14.0
+
+# Visualization
+matplotlib>=3.9.2
+seaborn>=0.13.2
+
+# Machine learning
+scikit-learn>=1.5.2
+xgboost>=2.1.1
+catboost>=1.2.7
+
+# Model persistence
+joblib>=1.4.2
+
+# Utilities
+tqdm>=4.66.4

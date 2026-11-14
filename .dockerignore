@@ -1,0 +1,13 @@
+.git
+.github
+**/node_modules
+**/dist
+**/coverage
+**/__pycache__
+**/.venv
+**/.env
+**/.env.*
+!**/.env.example
+ML/data
+ML/reports
+*.log

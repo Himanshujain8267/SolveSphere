@@ -4,12 +4,38 @@ import express from "express";
 import test from "node:test";
 import predictionRouter from "../routes/prediction.routes.js";
 import { createLpaPrediction } from "../controllers/lpa-prediction.controller.js";
+import { createCorsOptions } from "../config/cors.js";
 import LpaPredictionUsage from "../models/LpaPredictionUsage.js";
 import {
   consumeLpaPredictionQuota,
   LPA_PREDICTION_MAX_REQUESTS,
   LPA_PREDICTION_WINDOW_MS,
 } from "../services/lpa-prediction-rate-limit.service.js";
+
+test("production CORS requires and restricts configured frontend origins", () => {
+  assert.throws(
+    () => createCorsOptions({ NODE_ENV: "production" }),
+    /CORS_ORIGINS must contain the deployed frontend origin/
+  );
+
+  const { origin } = createCorsOptions({
+    NODE_ENV: "production",
+    CORS_ORIGINS: " https://solvesphere-web.onrender.com ",
+  });
+  const allowed = [];
+  const blocked = [];
+  origin("https://solvesphere-web.onrender.com", (error, permitted) => {
+    allowed.push({ error, permitted });
+  });
+  origin("https://attacker.example", (error, permitted) => {
+    blocked.push({ error, permitted });
+  });
+
+  assert.equal(allowed[0].error, null);
+  assert.equal(allowed[0].permitted, true);
+  assert.equal(blocked[0].error, null);
+  assert.equal(blocked[0].permitted, false);
+});
 
 test("LPA endpoint rejects requests without Firebase authentication", async () => {
   const app = express();

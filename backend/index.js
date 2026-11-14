@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/connectDb.js";
+import { createCorsOptions } from "./config/cors.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
 import platformRouter from "./routes/platform.routes.js";
@@ -11,10 +12,7 @@ const app = express();
 
 // Middleware
 app.use(cookieParser());
-app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-  credentials: true,
-}));
+app.use(cors(createCorsOptions()));
 app.use(express.json());
 
 // Routes

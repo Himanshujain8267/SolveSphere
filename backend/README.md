@@ -470,9 +470,11 @@ MONGODB_URL=mongodb+srv://<username>:<password>@<cluster-host>/solvesphere
 FIREBASE_TYPE=service_account
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_PRIVATE_KEY_ID=your-private-key-id
-FIREBASE_PRIVATE_KEY=your-service-account-private-key-with-escaped-newlinesFIREBASE_CLIENT_EMAIL=firebase-adminsdk@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=your-service-account-private-key-with-escaped-newlines
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk@your-project-id.iam.gserviceaccount.com
 FIREBASE_CLIENT_ID=your-client-id
 NODE_ENV=development
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 If the MongoDB password contains special characters, URL-encode them. For example:
@@ -486,6 +488,19 @@ If the MongoDB password contains special characters, URL-encode them. For exampl
 Never commit `.env` or expose Firebase service-account private keys. If a private key is exposed, revoke it in Firebase/Google Cloud and generate a replacement.
 
 The preparation-plan endpoint also requires Python and pandas in the environment used by the backend. Install pandas with `python -m pip install pandas`, or point `PYTHON_EXECUTABLE` in `backend/.env` to the required Python executable. The recommender reads `ML/recommendation/data/problem_database.csv`; create or refresh it using the recommendation scripts in the root README if it is missing or outdated.
+
+## Deploying with Render
+
+The root `render.yaml` defines a small Render Blueprint with a Docker backend and a static frontend. The backend image includes Node.js, Python inference dependencies, the recommendation catalog, and the saved LPA model artifacts.
+
+1. Push the repository to GitHub and create a new Blueprint in Render from that repository.
+2. Provide the prompted environment values. Set `MONGODB_URL` to a production MongoDB Atlas connection string and enter the Firebase Admin service-account values as backend secrets.
+3. Enter the Firebase web-app values for the `VITE_FIREBASE_*` frontend variables. These are public client configuration and will be included in the frontend bundle; never use Admin credentials here.
+4. Enable Google sign-in in Firebase Authentication and add `solvesphere-web.onrender.com` to its authorized domains.
+5. Restrict MongoDB Atlas network access to the backend host's documented outbound addresses. Ensure the `CORS_ORIGINS` value exactly matches the deployed frontend origin, including `https://` and excluding a trailing slash. Update it if you use a custom domain.
+6. Wait for both services to deploy, then check `https://solvesphere-api.onrender.com/api/health` and test sign-in, profile saving, preparation generation, and LPA prediction.
+
+The Blueprint uses free plans for a demo deployment; free web services may sleep when idle and cold-start slowly. The backend needs enough memory to run Node.js and load Python ML libraries at the same time. If the service restarts or runs out of memory during LPA prediction, use a larger backend instance.
 
 ## Running the Backend
 

@@ -18,6 +18,7 @@ SolveSphere is a student coding-practice and placement-readiness project. It bri
 - [Data and machine learning](#data-and-machine-learning)
 - [Problem recommendation and AI assistant](#problem-recommendation-and-ai-assistant)
 - [Validation and troubleshooting](#validation-and-troubleshooting)
+- [Deploying a demo with Render](#deploying-a-demo-with-render)
 - [Security and deployment notes](#security-and-deployment-notes)
 
 ## What works today
@@ -82,11 +83,14 @@ The frontend and API are separate Node projects. The ML scripts are independent 
 │   ├── recommendation/         Problem database, recommender, and AI assistant
 │   ├── models/                 Serialized preprocessing/model artifacts
 │   └── reports/eda/            Generated analysis figures
+├── Dockerfile                  Backend image with Node.js and Python inference
+├── render.yaml                 Render API and static-site Blueprint
+├── .dockerignore               Excludes local config and generated files from images
 ├── package.json                Root manifest; it does not define app scripts
 └── README.md
 ```
 
-`node_modules`, build output, Python bytecode, and local environment files are generated/local data and should not be committed.
+`node_modules`, build output, Python bytecode, and local environment files are generated/local data and should not be committed. The deploy image uses the smaller pinned inference-only dependencies in `ML/requirements-inference.txt`; the full ML development stack remains in `ML/requirements.txt`.
 
 ## Requirements
 
@@ -189,6 +193,7 @@ Copy `backend/.env.example` to `backend/.env`; never commit the resulting file.
 | `FIREBASE_PRIVATE_KEY_ID` | Service-account private-key ID; required by the current initializer. |
 | `FIREBASE_TYPE`, `FIREBASE_CLIENT_ID`, `FIREBASE_AUTH_URI`, `FIREBASE_TOKEN_URI`, `FIREBASE_AUTH_PROVIDER_X509_CERT_URL`, `FIREBASE_CLIENT_X509_CERT_URL` | Other service-account fields read by the Firebase Admin initializer. |
 | `NODE_ENV` | Controls whether some API errors include development details. |
+| `CORS_ORIGINS` | Comma-separated browser origins allowed by the API. Defaults to local Vite origins in development; required in production. |
 | `LEETCODE_API_BASE_URL` | Optional override for the LeetCode profile service; defaults to `https://alfa-leetcode-api.onrender.com`. |
 
 The backend initializes Firebase Admin only when the required service-account settings are present. Without them, the server can start, but protected requests return `503`.
@@ -477,7 +482,7 @@ The current backend `npm test` script is a placeholder that exits with an error;
 | Frontend reports Firebase configuration missing | Confirm the required `VITE_FIREBASE_*` values are set in `frontend/.env`, then restart Vite. |
 | Google sign-in is blocked or fails | Enable the Google provider in Firebase Authentication and authorize the development host in Firebase's authorized domains. |
 | Browser cannot reach the API | Start the backend, check `GET /api/health`, and ensure `VITE_API_BASE_URL` and backend `PORT` agree. |
-| Browser reports a CORS error | The API currently allows `http://localhost:5173` and `http://127.0.0.1:5173`; use one of these locally or update the backend CORS allowlist for another origin. |
+| Browser reports a CORS error | Set `CORS_ORIGINS` to the exact browser origin, without a trailing slash. Development defaults to `http://localhost:5173` and `http://127.0.0.1:5173`; production requires an explicit origin. |
 | Backend exits during startup | Verify MongoDB is available and `MONGODB_URL` is correct. The server listens only after connecting to the database. |
 | Protected API returns `503` | Check required Firebase Admin service-account environment variables in `backend/.env`. |
 | Preparation plan cannot be generated | Ensure Python and pandas are installed for the backend interpreter; set `PYTHON_EXECUTABLE` in `backend/.env` if needed. Check that `ML/recommendation/data/problem_database.csv` exists and contains LeetCode rows. |
@@ -487,13 +492,28 @@ The current backend `npm test` script is a placeholder that exits with an error;
 | ML script cannot find its input | Run the earlier pipeline step first, or place compatible input data at the configured path in `ML/config.py`. |
 | Problem recommender says database missing | Run `01_fetch_problems.py` to generate `ML/recommendation/data/problem_database.csv`. |
 
+## Deploying a demo with Render
+
+The root `render.yaml` provides a small Blueprint with a Docker backend and static frontend. The backend image includes Node.js, Python, the Python dependencies for the serialized LPA model, the recommendation catalog, and the model artifacts.
+
+1. Push the deployment changes to GitHub.
+2. In Render, create a new Blueprint from this repository and use the root `render.yaml`. The Blueprint creates `solvesphere-api` and `solvesphere-web`.
+3. Enter the prompted `MONGODB_URL` and Firebase Admin service-account values for the API, then enter the Firebase web-app values for the frontend `VITE_FIREBASE_*` variables. Keep Admin credentials only in the backend environment.
+4. In Firebase Authentication, enable Google sign-in and add `solvesphere-web.onrender.com` to the authorized domains.
+5. In MongoDB Atlas, configure a production database and allow the backend host's documented outbound addresses. If using a custom frontend domain, change the API `CORS_ORIGINS` to its exact HTTPS origin and update Firebase authorized domains.
+6. After both services report healthy, visit the frontend URL and test Google sign-in, saving platform IDs, the dashboard, preparation questions, and LPA prediction. The API health check is at `https://solvesphere-api.onrender.com/api/health`.
+
+The Blueprint uses free plans for a demo. Free web services can sleep when idle and cold-start slowly; hosting memory must be sufficient to run Node.js and Python ML libraries together. Upgrade the backend instance if it restarts or runs out of memory during LPA prediction. Custom domains or renamed services require updating the URLs in `render.yaml` and the backend CORS setting.
+
 ## Security and deployment notes
 
 - Never commit `backend/.env`, private keys, Gemini API keys, or other service credentials.
 - Firebase web-app configuration is delivered to the browser; it is not equivalent to a Firebase Admin private key. Configure Firebase Authentication and security rules appropriately.
 - Protected API requests must use a Firebase ID token. Do not send Firebase service-account credentials to the browser.
-- The API's current CORS allowlist is local-development-only. Configure it for the deployed frontend before production use.
-- For deployment, configure the frontend API URL, Firebase authorized domains, backend secrets, MongoDB network access, and CORS origins for the target environment.
+- Backend CORS uses `CORS_ORIGINS`; in production the API refuses to start if no allowed frontend origin is configured.
+- The root `render.yaml` provides a small Render Blueprint for the API Docker image and static frontend, including the SPA route rewrite. Follow the [Render deployment steps](./backend/README.md#deploying-with-render), set all prompted secrets, and adjust both service URLs and `CORS_ORIGINS` if you use custom domains.
+- The Docker image installs the pinned inference dependencies in `ML/requirements-inference.txt`; update these pins deliberately if retraining or changing the serialized model artifacts.
+- For deployment, configure Firebase authorized domains, backend secrets, MongoDB network access, and CORS origins for the target environment.
 - Upstream coding-platform services are third-party dependencies and may impose availability or rate limits.
 - The platform links/dashboard handle public usernames and public profile statistics; the API does not authenticate to those platform accounts.
 - The site and ML outputs are project/demo functionality, not placement guarantees or professional career advice.

@@ -1,17 +1,18 @@
 :root {
-  --bg: #f5f7fc;
-  --bg-soft: #eef2ff;
-  --panel: #fff;
-  --panel-strong: #f7f8ff;
-  --border: rgba(26, 38, 68, 0.09);
-  --text: #17213a;
-  --muted: #68748e;
-  --primary: #5b65f5;
-  --primary-dark: #454bd2;
-  --primary-soft: rgba(91, 101, 245, 0.1);
-  --purple: #9673f7;
-  --green: #20b889;
-  --shadow: 0 18px 48px rgba(34, 45, 85, 0.08);
+  color-scheme: dark;
+  --bg: #0b1020;
+  --bg-soft: #10182b;
+  --panel: #151d33;
+  --panel-strong: #1b2540;
+  --border: rgba(190, 202, 235, 0.13);
+  --text: #f4f6ff;
+  --muted: #a8b3cc;
+  --primary: #7c83ff;
+  --primary-dark: #9aa0ff;
+  --primary-soft: rgba(124, 131, 255, 0.14);
+  --purple: #9790ff;
+  --green: #35d0ba;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 }
 
 body {
@@ -1925,5 +1926,385 @@ input:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  background:
+    radial-gradient(ellipse at 92% 10%, rgba(124, 131, 255, 0.09), transparent 28%),
+    var(--bg);
+}
+
+.profile-page,
+.preparation-page,
+.lpa-page {
+  background:
+    radial-gradient(ellipse at 88% 8%, rgba(124, 131, 255, 0.1), transparent 28%),
+    var(--bg);
+  color: var(--text);
+}
+
+.site-header,
+.profile-topbar {
+  border-bottom-color: var(--border);
+  background: rgba(11, 16, 32, 0.82);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+.main-nav {
+  color: var(--muted);
+}
+
+.secondary-button,
+.profile-button,
+.profile-signout,
+.preparation-nav-button {
+  border-color: var(--border);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.header-add-profile-button,
+.preparation-nav-button:hover {
+  border-color: rgba(124, 131, 255, 0.3);
+  background: rgba(124, 131, 255, 0.12);
+  color: #b7bcff;
+}
+
+.feature-section,
+.platform-section,
+.dashboard-preview-section,
+.analytics-section,
+.workspace-section,
+.company-section,
+.final-cta-section {
+  background: transparent;
+}
+
+.section-heading h2,
+.dashboard-section-heading h2,
+.preparation-section-heading h2,
+.profile-heading h1,
+.footer-branding h3 {
+  color: var(--text);
+}
+
+.section-heading p,
+.feature-card p,
+.platform-card p,
+.company-card li,
+.workspace-card p,
+.analytics-panel p,
+.profile-description,
+.preparation-area-card p {
+  color: var(--muted);
+}
+
+.feature-card,
+.platform-card,
+.company-card,
+.workspace-card,
+.analytics-panel,
+.dashboard-card,
+.profile-form,
+.dashboard-summary-card,
+.dashboard-chart-card,
+.platform-dashboard-card,
+.preparation-area-card,
+.preparation-plan-panel,
+.preparation-question,
+.lpa-form-section {
+  border-color: var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.feature-card h3,
+.platform-card h3,
+.company-card h3,
+.workspace-card h3,
+.analytics-panel h3,
+.stat-box strong,
+.preparation-area-card h3,
+.preparation-plan-intro h3,
+.preparation-generated-heading h3,
+.preparation-question h4,
+.lpa-section-heading h2 {
+  color: var(--text);
+}
+
+.feature-card:hover,
+.platform-card:hover,
+.company-card:hover,
+.workspace-card:hover,
+.analytics-panel:hover,
+.preparation-area-card:hover,
+.preparation-question:hover {
+  border-color: rgba(124, 131, 255, 0.36);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.32);
+}
+
+.feature-icon,
+.platform-icon,
+.preparation-area-number,
+.preparation-plan-icon,
+.preparation-question-number,
+.lpa-section-heading > span {
+  border-color: rgba(124, 131, 255, 0.2);
+  background: rgba(124, 131, 255, 0.14);
+  color: #b7bcff;
+  box-shadow: none;
+}
+
+.visual-window,
+.window-header,
+.sidebar-preview,
+.main-preview,
+.chart-panel,
+.stat-box,
+.insight-panel,
+.workspace-card,
+.workspace-preview .preview-panel {
+  border-color: var(--border);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.sidebar-item.active,
+.row-card.highlight {
+  background: rgba(124, 131, 255, 0.15);
+  color: #c0c4ff;
+}
+
+.dashboard-preview-section,
+.analytics-section {
+  color: var(--text);
+}
+
+.site-footer {
+  border-top-color: var(--border);
+  background: rgba(11, 16, 32, 0.72);
+  color: var(--muted);
+}
+
+.dashboard-welcome-panel,
+.preparation-hero,
+.lpa-hero,
+.final-cta-box {
+  border-color: rgba(190, 202, 235, 0.16);
+  background:
+    radial-gradient(ellipse at 86% 8%, rgba(124, 131, 255, 0.26), transparent 34%),
+    linear-gradient(120deg, #111a31 0%, #192447 62%, #252858 100%);
+}
+
+.dashboard-home-button,
+.dashboard-refresh-button {
+  border-color: rgba(190, 202, 235, 0.2);
+  color: var(--text);
+}
+
+.dashboard-edit-button {
+  border-color: rgba(124, 131, 255, 0.32);
+  background: rgba(124, 131, 255, 0.16);
+  color: #e2e4ff;
+}
+
+.dashboard-summary-card,
+.dashboard-chart-card,
+.platform-dashboard-card {
+  color: var(--text);
+}
+
+.summary-blue .summary-icon,
+.summary-violet .summary-icon {
+  background: rgba(124, 131, 255, 0.16);
+  color: #b7bcff;
+}
+
+.summary-green .summary-icon {
+  background: rgba(53, 208, 186, 0.14);
+  color: #63e3d0;
+}
+
+.dashboard-summary-card small,
+.dashboard-updated,
+.chart-footnote,
+.chart-empty-state,
+.platform-metric dt,
+.platform-mini-chart-title,
+.preparation-area-status,
+.preparation-plan-note,
+.preparation-plan-disclaimer,
+.preparation-question-meta,
+.preparation-question-copy > p,
+.lpa-section-heading p {
+  color: var(--muted);
+}
+
+.chart-caption,
+.platform-status,
+.platform-metric {
+  border-color: var(--border);
+  background: var(--panel-strong);
+  color: var(--muted);
+}
+
+.platform-status.is-connected {
+  background: rgba(53, 208, 186, 0.13);
+  color: #76e8d7;
+}
+
+.platform-status.is-connected > span {
+  background: var(--green);
+}
+
+.platform-mini-chart {
+  border-top-color: var(--border);
+}
+
+.solved-bar-chart line {
+  stroke: rgba(190, 202, 235, 0.18);
+}
+
+.solved-bar-chart text,
+.solved-bar-chart .solved-chart-label,
+.difficulty-donut-label {
+  fill: var(--muted);
+}
+
+.solved-bar-chart .solved-chart-value,
+.difficulty-donut-total,
+.difficulty-legend strong {
+  fill: var(--text);
+}
+
+.difficulty-donut-track {
+  stroke: rgba(190, 202, 235, 0.16);
+}
+
+.difficulty-legend-name {
+  color: var(--muted);
+}
+
+.preparation-nav-button {
+  color: #b7bcff;
+}
+
+.preparation-area-status,
+.preparation-generated-plan {
+  border-top-color: var(--border);
+}
+
+.preparation-topic-form label,
+.preparation-fallback-level label,
+.lpa-field {
+  color: #d3daf0;
+}
+
+.preparation-topic-form select,
+.preparation-fallback-level select,
+.lpa-field input,
+.lpa-field select,
+.handle-field,
+.handle-field input,
+input,
+select,
+textarea {
+  border-color: var(--border);
+  background-color: var(--panel-strong);
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8995b0;
+}
+
+.preparation-topic-form select:focus,
+.preparation-fallback-level select:focus,
+.lpa-field input:focus,
+.lpa-field select:focus,
+.handle-field input:focus {
+  border-color: var(--primary);
+  outline-color: rgba(124, 131, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(124, 131, 255, 0.16);
+}
+
+.preparation-rating-badge,
+.preparation-question-number {
+  border-color: rgba(124, 131, 255, 0.22);
+  background: rgba(124, 131, 255, 0.12);
+  color: #c0c4ff;
+}
+
+.preparation-rating-badge strong,
+.preparation-workspace-link,
+.preparation-question > a {
+  color: #b7bcff;
+}
+
+.preparation-question > a {
+  border-color: rgba(124, 131, 255, 0.28);
+}
+
+.preparation-question > a:hover {
+  background: rgba(124, 131, 255, 0.12);
+}
+
+.preparation-question.is-solved {
+  border-color: rgba(53, 208, 186, 0.28);
+  background: rgba(53, 208, 186, 0.07);
+}
+
+.preparation-solved-toggle {
+  border-color: var(--border);
+  background: var(--panel-strong);
+}
+
+.lpa-demo-notice,
+.lpa-auth-notice {
+  border-color: rgba(190, 202, 235, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.lpa-form-section {
+  color: var(--text);
+}
+
+.lpa-error,
+.preparation-plan-error {
+  border-color: rgba(255, 113, 136, 0.3);
+  background: rgba(255, 113, 136, 0.09);
+  color: #ffb2bf;
+}
+
+.lpa-result {
+  border-color: rgba(53, 208, 186, 0.28);
+  background: rgba(53, 208, 186, 0.08);
+}
+
+.lpa-result .preparation-kicker,
+.lpa-result > strong {
+  color: #70e4d3;
+}
+
+.lpa-result > span,
+.profile-save-message {
+  color: #9be8dc;
+}
+
+@media (max-width: 760px) {
+  .main-nav {
+    border-color: var(--border);
+    background: rgba(16, 24, 43, 0.97);
   }
 }

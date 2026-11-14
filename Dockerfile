@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim
+FROM node:22-trixie-slim
 
 ENV NODE_ENV=production \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -8,6 +8,8 @@ ENV NODE_ENV=production \
 RUN apt-get update \
     && apt-get install --no-install-recommends -y libgomp1 python3 python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -c "import sys; assert sys.version_info >= (3, 12), sys.version"
 
 WORKDIR /app
 
@@ -24,6 +26,8 @@ COPY ML/config.py /app/ML/config.py
 COPY ML/models /app/ML/models
 COPY ML/src /app/ML/src
 COPY ML/recommendation /app/ML/recommendation
+
+RUN /opt/venv/bin/python -c "import joblib; joblib.load('/app/ML/models/model_package_v1.joblib'); joblib.load('/app/ML/models/preprocessor.joblib')"
 
 WORKDIR /app/backend
 EXPOSE 10000

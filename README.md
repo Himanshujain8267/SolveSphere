@@ -228,9 +228,9 @@ The profile form also caches saved platform IDs in browser `localStorage` for th
 
 ### LPA package estimator
 
-The homepage's **Predict LPA** button opens a form for age, gender, branch, CGPA, projects, internships, skills, and optional platform/GitHub statistics. `POST /api/predictions/lpa` invokes the saved preprocessing and XGBoost regression artifacts. Inputs are used for that request only and are not saved.
+The homepage's **Predict LPA** button opens a form for age, gender, branch, CGPA, projects, internships, skills, and optional platform/GitHub statistics. Users must sign in with Firebase before requesting an estimate. `POST /api/predictions/lpa` verifies the Firebase ID token, validates the submitted values, and invokes the saved preprocessing and XGBoost regression artifacts. Inputs are sent to the Python worker over standard input and are not saved; MongoDB stores only a hashed user identifier and per-window request count for rate limiting.
 
-This is a clearly labeled demo estimate: the current package regressor was trained on synthetic student data and only on students marked placed. It estimates package, not the chance of placement; it is not reliable career or compensation advice. The backend's Python interpreter must have the dependencies from `ML/requirements.txt` installed, and both `ML/models/model_package_v1.joblib` and `ML/models/preprocessor.joblib` must exist.
+This is a clearly labeled demo estimate: the current package regressor was trained on synthetic student data and only on students marked placed. It estimates package, not the chance of placement; it is not reliable career or compensation advice. The endpoint allows five requests per Firebase user in each 15-minute window and limits concurrent Python predictions to two per backend process. The backend's Python interpreter must have the dependencies from `ML/requirements.txt` installed, and both `ML/models/model_package_v1.joblib` and `ML/models/preprocessor.joblib` must exist.
 
 ### Frontend commands
 
@@ -256,6 +256,7 @@ Authorization: Bearer <Firebase ID token>
 | Method | Path | Auth | Behavior |
 |---|---|---:|---|
 | `GET` | `/api/health` | No | Returns a basic server health response. |
+| `POST` | `/api/predictions/lpa` | Yes | Validates and estimates package using the synthetic-data demo model; limited to five requests per user per 15-minute window. |
 | `POST` | `/api/auth/login` | Yes | Verifies the Firebase token and creates or updates the MongoDB user. Request body is empty. |
 | `GET` | `/api/auth/me` | Yes | Returns the synchronized MongoDB user for the token's Firebase UID. |
 | `POST` | `/api/auth/logout` | Yes | Acknowledges logout; the browser must still sign out of Firebase. The API does not revoke tokens. |

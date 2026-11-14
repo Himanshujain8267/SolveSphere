@@ -1466,6 +1466,46 @@ input:focus-visible {
   color: #fff;
 }
 
+.lpa-auth-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 13px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0f2ff;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.lpa-auth-notice p {
+  margin: 6px 0 0;
+}
+
+.lpa-auth-error {
+  color: #ffd1c9;
+}
+
+.lpa-auth-notice button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.lpa-auth-notice button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .lpa-form {
   display: grid;
   gap: 16px;
@@ -1626,6 +1666,11 @@ input:focus-visible {
 
   .preparation-area-card {
     min-height: 180px;
+  }
+
+  .lpa-auth-notice {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .preparation-question {

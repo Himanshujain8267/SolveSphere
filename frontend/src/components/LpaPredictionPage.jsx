@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { API_BASE_URL } from '../api';
+import { auth } from '../firebase';
 
 const requiredFields = [
   { name: 'age', label: 'Age', min: 16, max: 60, step: 1 },
@@ -33,7 +34,14 @@ const initialForm = {
   ...Object.fromEntries(optionalFields.map(({ name }) => [name, ''])),
 };
 
-const LpaPredictionPage = ({ onHome }) => {
+const LpaPredictionPage = ({
+  user,
+  onHome,
+  onSignIn,
+  isAuthLoading,
+  isAuthResolved,
+  authError,
+}) => {
   const [form, setForm] = useState(initialForm);
   const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState('');
@@ -50,6 +58,12 @@ const LpaPredictionPage = ({ onHome }) => {
     setPrediction(null);
     setError('');
 
+    const firebaseUser = auth?.currentUser;
+    if (!user || !firebaseUser || firebaseUser.uid !== user.uid) {
+      setError('Sign in again to use the LPA estimator.');
+      return;
+    }
+
     const profile = Object.fromEntries(
       Object.entries(form).map(([field, value]) => [
         field,
@@ -59,9 +73,13 @@ const LpaPredictionPage = ({ onHome }) => {
 
     try {
       setIsSubmitting(true);
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch(`${API_BASE_URL}/predictions/lpa`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(profile),
       });
       const payload = await response.json();
@@ -121,6 +139,19 @@ const LpaPredictionPage = ({ onHome }) => {
               this calculation and is not saved by this page.
             </span>
           </div>
+          {!isAuthResolved ? (
+            <p className="lpa-auth-notice">Checking your sign-in status...</p>
+          ) : !user ? (
+            <div className="lpa-auth-notice" role="status">
+              <div>
+                <span>Sign in with Google to request an authenticated, rate-limited estimate.</span>
+                {authError && <p className="lpa-auth-error">{authError}</p>}
+              </div>
+              <button type="button" onClick={onSignIn} disabled={isAuthLoading}>
+                {isAuthLoading ? 'Signing in...' : 'Sign in with Google'}
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <form className="lpa-form" onSubmit={handleSubmit}>
@@ -170,9 +201,13 @@ const LpaPredictionPage = ({ onHome }) => {
 
           {error && <p className="lpa-error" role="alert">{error}</p>}
 
-          <button className="lpa-submit-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Estimating...' : 'Estimate package'}
-            {!isSubmitting && <span aria-hidden="true">→</span>}
+          <button
+            className="lpa-submit-button"
+            type="submit"
+            disabled={isSubmitting || !user || !isAuthResolved || isAuthLoading}
+          >
+            {isSubmitting ? 'Estimating...' : user ? 'Estimate package' : 'Sign in to estimate'}
+            {!isSubmitting && user && <span aria-hidden="true">→</span>}
           </button>
 
           {prediction && (

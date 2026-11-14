@@ -215,7 +215,16 @@ const App = () => {
   }
 
   if (location.pathname === '/lpa-prediction') {
-    return <LpaPredictionPage onHome={() => navigate('/')} />;
+    return (
+      <LpaPredictionPage
+        user={user}
+        onHome={() => navigate('/')}
+        onSignIn={handleGoogleAuth}
+        isAuthLoading={isLoading}
+        isAuthResolved={isAuthResolved}
+        authError={authError}
+      />
+    );
   }
 
   if (location.pathname !== '/') return <Navigate to="/" replace />;

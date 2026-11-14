@@ -31,6 +31,7 @@ OPTIONAL_PROFILE_FIELDS = [
     "github_contributions",
     "github_stars",
 ]
+MAX_PROFILE_JSON_LENGTH = 10000
 
 RATING_WEIGHTS = {
     "codeforces_rating": (3500.0, 0.40),
@@ -82,11 +83,17 @@ def build_feature_row(profile):
 
 def main():
     parser = argparse.ArgumentParser(description="Estimate a demo package in LPA")
-    parser.add_argument("--input-json", required=True, help="Student profile JSON")
+    parser.add_argument("--input-json", help="Student profile JSON (defaults to stdin)")
     args = parser.parse_args()
 
     try:
-        profile = json.loads(args.input_json)
+        profile_json = args.input_json
+        if profile_json is None:
+            profile_json = sys.stdin.read(MAX_PROFILE_JSON_LENGTH + 1)
+        if len(profile_json) > MAX_PROFILE_JSON_LENGTH:
+            raise ValueError("Student profile input is too large")
+
+        profile = json.loads(profile_json)
         if not isinstance(profile, dict):
             raise ValueError("Student profile must be a JSON object")
 

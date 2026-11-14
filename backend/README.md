@@ -37,8 +37,11 @@ Estimates a demo package in lakhs per annum using the student's submitted academ
 
 ```http
 POST /api/predictions/lpa
+Authorization: Bearer <Firebase ID token>
 Content-Type: application/json
 ```
+
+Authentication is required. Each Firebase user may make five requests per fixed 15-minute window. Rate-limit counters are stored in MongoDB using a hash of the Firebase UID and expire automatically. Exceeded requests return `429` with a `Retry-After` header. The endpoint fails closed with `503` if MongoDB cannot record usage.
 
 Required values: `age`, `gender` (`Male` or `Female`), `branch` (`CSE`, `IT`, `ECE`, `EEE`, `MECH`, or `CIVIL`), `cgpa` (0-10), `projects`, `internships`, and `skills_count`. Platform and GitHub feature values are optional numbers; omit them or send `null` when unknown. See the fields in the root LPA estimator form or controller for the accepted ranges.
 
@@ -57,7 +60,9 @@ Success response:
 }
 ```
 
-The current model is trained on synthetic data and only on placed students. It predicts package only; it does not estimate placement likelihood. Submitted inputs are not persisted. Install the packages in `ML/requirements.txt` in the Python environment used by the backend, and retain both artifacts under `ML/models/`.
+The current model is trained on synthetic data and only on placed students. It predicts package only; it does not estimate placement likelihood. Submitted inputs are not persisted and are passed to Python over standard input. The backend permits at most two concurrent Python predictions per process and terminates a prediction process after 30 seconds. Install the packages in `ML/requirements.txt` in the Python environment used by the backend, and retain both artifacts under `ML/models/`.
+
+Invalid profiles return `400`; missing or invalid Firebase credentials return `401`; an exhausted user quota returns `429`; an overloaded or unavailable estimator returns `503`.
 
 ### User Platform IDs
 

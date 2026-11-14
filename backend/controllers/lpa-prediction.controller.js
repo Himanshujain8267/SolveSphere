@@ -105,10 +105,19 @@ export const createLpaPrediction = async (req, res) => {
     });
   } catch (error) {
     console.error("Create LPA prediction error:", error);
+    if (error?.code === "LPA_MODEL_BUSY") {
+      res.set("Retry-After", "10");
+      return res.status(503).json({
+        success: false,
+        message: "The estimator is handling its current workload. Please try again shortly.",
+        code: "LPA_MODEL_BUSY",
+      });
+    }
+
     return res.status(503).json({
       success: false,
-      message: "The demo prediction model is unavailable. Install the dependencies in ML/requirements.txt and ensure the saved model artifacts are present.",
-      code: "LPA_MODEL_UNAVAILABLE",
+      message: "The estimator is temporarily unavailable. Please try again later.",
+      code: error?.code || "LPA_MODEL_UNAVAILABLE",
     });
   }
 };

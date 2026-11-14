@@ -19,6 +19,7 @@ Run: python 02_recommend.py
 """
 
 import argparse
+import json
 import random
 from pathlib import Path
 
@@ -68,6 +69,64 @@ def filter_by_topic(df, topics):
     return df[df["tags"].str.contains(pattern, na=False)]
 
 
+def normalize_topic(topic):
+    """Normalize a topic label for comparison with database tags."""
+    return " ".join(str(topic).strip().lower().replace("_", " ").replace("-", " ").split())
+
+
+def get_available_topics(platform="Codeforces", db=None):
+    """Return the distinct non-empty tags available for a platform."""
+    if db is None:
+        db = load_database()
+    platform_rows = db[db["platform"].str.casefold() == platform.casefold()]
+    topics = {
+        tag.strip()
+        for tags in platform_rows["tags"].fillna("")
+        for tag in str(tags).split(",")
+        if tag.strip()
+    }
+    return sorted(topics, key=str.casefold)
+
+
+def get_topic_recommendations(topic, db=None, count=5, platform="Codeforces"):
+    """Return distinct problems whose tags exactly match the requested topic."""
+    if db is None:
+        db = load_database()
+
+    requested_topic = normalize_topic(topic)
+    if not requested_topic:
+        return []
+
+    platform_rows = db[db["platform"].str.casefold() == platform.casefold()]
+    platform_rows = platform_rows[
+        platform_rows["url"].astype(str).str.match(r"^https?://", case=False, na=False)
+    ]
+    matching_rows = platform_rows[
+        platform_rows["tags"].fillna("").apply(
+            lambda tags: requested_topic in {
+                normalize_topic(tag) for tag in str(tags).split(",") if tag.strip()
+            }
+        )
+    ].drop_duplicates("problem_id")
+    if matching_rows.empty:
+        return []
+
+    selected = matching_rows.sample(n=min(max(1, int(count)), 10, len(matching_rows)))
+    recommendations = []
+    for _, problem in selected.iterrows():
+        recommendations.append({
+            "type": "Topic Practice",
+            "problem_id": problem["problem_id"],
+            "title": problem["title"],
+            "platform": problem["platform"],
+            "url": problem["url"],
+            "difficulty": int(problem["difficulty"]),
+            "tags": str(problem["tags"]),
+            "reason": f"Matches your selected topic: {topic.strip()}.",
+        })
+    return recommendations
+
+
 def pick_one(df, exclude_ids=None):
     """Pick one random problem from a DataFrame, avoiding already-picked IDs."""
     if exclude_ids:
@@ -81,7 +140,7 @@ def pick_one(df, exclude_ids=None):
 # The Recommendation Engine
 # ──────────────────────────────────────────────
 
-def get_recommendations(user_profile, db=None):
+def get_recommendations(user_profile, db=None, count=3):
     """
     Generate 3 personalized problem recommendations.
 
@@ -115,6 +174,9 @@ def get_recommendations(user_profile, db=None):
     pool = db.copy()
     if platform:
         pool = pool[pool["platform"] == platform]
+    pool = pool[
+        pool["url"].astype(str).str.match(r"^https?://", case=False, na=False)
+    ]
 
     recommendations = []
     picked_ids = set()
@@ -211,7 +273,36 @@ def get_recommendations(user_profile, db=None):
                           f"This will push you to the next level."
         })
 
-    return recommendations
+    count = max(0, min(int(count), 10))
+    extra_targets = [rating - 100, rating, rating + 100, rating + 200, rating + 300]
+    while len(recommendations) < count:
+        target_rating = extra_targets[(len(recommendations) - 3) % len(extra_targets)]
+        remaining = pool[~pool["problem_id"].isin(picked_ids)]
+        if remaining.empty:
+            break
+
+        candidates = filter_by_rating(remaining, target_rating - 250, target_rating + 250)
+        if candidates.empty:
+            distance = (remaining["difficulty"] - target_rating).abs()
+            candidates = remaining[distance == distance.min()]
+
+        pick = pick_one(candidates)
+        picked_ids.add(pick["problem_id"])
+        recommendations.append({
+            "type": "Steady Practice",
+            "problem_id": pick["problem_id"],
+            "title": pick["title"],
+            "platform": pick["platform"],
+            "url": pick["url"],
+            "difficulty": int(pick["difficulty"]),
+            "tags": pick["tags"],
+            "reason": (
+                f"Build consistency with a problem near your current level "
+                f"({rating})."
+            ),
+        })
+
+    return recommendations[:count]
 
 
 # ──────────────────────────────────────────────
@@ -262,7 +353,49 @@ def main():
     parser.add_argument("--platform", type=str, default=None,
                         help="Preferred platform: LeetCode or Codeforces")
     parser.add_argument("--name", type=str, default="Harsh", help="User name")
+    parser.add_argument("--count", type=int, default=3,
+                        help="Maximum number of recommendations (1-10)")
+    parser.add_argument("--topic", type=str, default=None,
+                        help="Generate problems matching this exact topic tag")
+    parser.add_argument("--list-topics", action="store_true",
+                        help="List available topic tags for the selected platform")
+    parser.add_argument("--json", action="store_true",
+                        help="Write recommendations as JSON")
     args = parser.parse_args()
+
+    if not 1 <= args.count <= 10:
+        parser.error("--count must be between 1 and 10")
+    if args.topic is not None and not args.topic.strip():
+        parser.error("--topic cannot be empty")
+    if args.topic is not None and args.list_topics:
+        parser.error("--topic and --list-topics cannot be used together")
+
+    if args.list_topics:
+        topics = get_available_topics(args.platform or "Codeforces")
+        if args.json:
+            print(json.dumps({"platform": args.platform or "Codeforces", "topics": topics}))
+        else:
+            print("\n".join(topics))
+        return
+
+    if args.topic is not None:
+        recommendations = get_topic_recommendations(
+            args.topic,
+            count=args.count,
+            platform=args.platform or "Codeforces",
+        )
+        if args.json:
+            print(json.dumps({
+                "topic": args.topic.strip(),
+                "platform": args.platform or "Codeforces",
+                "recommendations": recommendations,
+            }))
+        else:
+            display_recommendations(
+                {"name": "Student", "current_rating": args.topic.strip()},
+                recommendations,
+            )
+        return
 
     user_profile = {
         "name":               args.name,
@@ -272,8 +405,14 @@ def main():
         "preferred_platform": args.platform,
     }
 
-    recs = get_recommendations(user_profile)
-    display_recommendations(user_profile, recs)
+    recs = get_recommendations(user_profile, count=args.count)
+    if args.json:
+        print(json.dumps({
+            "currentRating": args.rating,
+            "recommendations": recs,
+        }))
+    else:
+        display_recommendations(user_profile, recs)
 
 
 if __name__ == "__main__":

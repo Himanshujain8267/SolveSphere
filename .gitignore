@@ -2,8 +2,10 @@ server/node_modules/
 frontend/node_modules/
 backend/node_modules/
 server/.env
+.env
 .env.local
 .env.*
+!.env.example
 # Logs
 logs
 *.log
@@ -33,4 +35,3 @@ dist-ssr
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
-

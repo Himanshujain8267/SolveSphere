@@ -1,122 +1,261 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+} from 'firebase/auth';
+import { auth, isFirebaseConfigured, firebaseErrorMessage } from './firebase';
+import { API_BASE_URL } from './api';
+import ProfileSetup from './components/ProfileSetup';
+import Dashboard from './components/Dashboard';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import FeatureSection from './components/FeatureSection';
+import DashboardPreview from './components/DashboardPreview';
+import AnalyticsSection from './components/AnalyticsSection';
+import PlatformSection from './components/PlatformSection';
+import CompanySection from './components/CompanySection';
+import WorkspaceSection from './components/WorkspaceSection';
+import FinalCTA from './components/FinalCTA';
+import Footer from './components/Footer';
+import PreparationPage from './components/PreparationPage';
+import LpaPredictionPage from './components/LpaPredictionPage';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+
+  useEffect(() => {
+    if (!auth) {
+      setIsAuthResolved(true);
+      return undefined;
+    }
+
+    let isActive = true;
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        if (isActive) {
+          setUser(null);
+          setIsAuthResolved(true);
+        }
+        return;
+      }
+
+      if (isActive) {
+        setIsLoading(true);
+        setAuthError('');
+      }
+
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.message || 'Authentication failed.');
+        }
+
+        if (isActive) {
+          setUser({
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+            backendUser: payload?.data?.user,
+          });
+        }
+      } catch (error) {
+        if (isActive) {
+          setAuthError(error instanceof TypeError && error.message === 'Failed to fetch'
+            ? `Cannot reach the backend at ${API_BASE_URL}. Start the backend and check its database connection.`
+            : error?.message || 'Google authentication failed.');
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+          setIsAuthResolved(true);
+        }
+      }
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleGoogleAuth = async () => {
+    if (!isFirebaseConfigured || !auth) {
+      setAuthError(firebaseErrorMessage);
+      setAuthSuccess('');
+      return;
+    }
+
+    if (isLoading) return;
+
+    setIsLoading(true);
+    setAuthError('');
+    setAuthSuccess('');
+
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      if (error?.code === 'auth/popup-blocked') {
+        try {
+          await signInWithRedirect(auth, new GoogleAuthProvider());
+          return;
+        } catch (redirectError) {
+          setAuthError(redirectError?.message || 'Unable to start Google sign-in.');
+          return;
+        }
+      }
+
+      const message = error?.message === 'auth/popup-closed-by-user'
+        ? 'Google sign-in was cancelled.'
+        : error?.message || 'Google authentication failed.';
+
+      setAuthError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      if (auth) {
+        await signOut(auth);
+      }
+      setUser(null);
+      navigate('/');
+      setAuthSuccess('Signed out successfully.');
+      setAuthError('');
+    } catch (error) {
+      setAuthError(error?.message || 'Failed to sign out.');
+    }
+  };
+
+  const handlePrimaryAction = () => {
+    if (user) {
+      navigate('/dashboard');
+      return;
+    }
+    handleGoogleAuth();
+  };
+
+  const scrollToSection = (sectionId) => {
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setMobileMenuOpen(false);
+  };
+
+  if (location.pathname === '/profile') {
+    if (!isAuthResolved) return null;
+    if (!user) return <Navigate to="/" replace />;
+
+    return (
+      <ProfileSetup
+        user={user}
+        onSignOut={handleSignOut}
+        isAuthLoading={isLoading}
+        onHome={() => navigate('/')}
+        onSaved={() => navigate('/dashboard')}
+        onOpenPreparation={() => navigate('/preparation')}
+      />
+    );
+  }
+
+  if (location.pathname === '/dashboard') {
+    if (!isAuthResolved) return null;
+    if (!user) return <Navigate to="/" replace />;
+
+    return (
+      <Dashboard
+        user={user}
+        onSignOut={handleSignOut}
+        isAuthLoading={isLoading}
+        onHome={() => navigate('/')}
+        onEditProfile={() => navigate('/profile')}
+        onOpenPreparation={() => navigate('/preparation')}
+      />
+    );
+  }
+
+  if (location.pathname === '/preparation') {
+    if (!isAuthResolved) return null;
+
+    return (
+      <PreparationPage
+        user={user}
+        onHome={() => navigate('/')}
+        onOpenWorkspace={() => navigate('/dashboard')}
+        onEditProfile={() => navigate('/profile')}
+        onSignIn={handleGoogleAuth}
+        onSignOut={handleSignOut}
+        isAuthLoading={isLoading}
+      />
+    );
+  }
+
+  if (location.pathname === '/lpa-prediction') {
+    return <LpaPredictionPage onHome={() => navigate('/')} />;
+  }
+
+  if (location.pathname !== '/') return <Navigate to="/" replace />;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-shell">
+      <Header
+        user={user}
+        onSignIn={handleGoogleAuth}
+        onSignOut={handleSignOut}
+        isAuthLoading={isLoading}
+        onEditProfile={() => navigate('/profile')}
+        onOpenWorkspace={() => navigate('/dashboard')}
+        onOpenPreparation={() => navigate('/preparation')}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
 
-      <div className="ticks"></div>
+      {authError && <div className="global-alert error">{authError}</div>}
+      {authSuccess && <div className="global-alert success">{authSuccess}</div>}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <main>
+        <Hero
+          user={user}
+          onPrimaryAction={handlePrimaryAction}
+          onSecondaryAction={() => scrollToSection('features')}
+          onLpaPrediction={() => navigate('/lpa-prediction')}
+        />
+        <FeatureSection />
+        <DashboardPreview />
+        <AnalyticsSection />
+        <PlatformSection />
+        <CompanySection onOpenPreparation={() => navigate('/preparation')} />
+        <WorkspaceSection />
+        <FinalCTA user={user} onPrimaryAction={handlePrimaryAction} />
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+      <Footer onOpenPreparation={() => navigate('/preparation')} />
+    </div>
+  );
+};
 
-export default App
+export default App;

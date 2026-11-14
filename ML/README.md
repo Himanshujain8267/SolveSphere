@@ -135,9 +135,28 @@ Collect from college communities with:
 
 ---
 
-## Models (coming next)
+## Problem recommender integration
+
+`recommendation/02_recommend.py` implements a rule-based problem recommender. It can be run on its own from `ML/recommendation/`, and the backend also invokes it to produce five LeetCode questions for the authenticated Preparation page. This recommender is separate from the placement package-regression model described above.
+
+The web plan uses linked LeetCode contest rating when present, or a user-selected Easy/Medium/Hard starting level otherwise. The current LeetCode rows in the problem catalog do not contain topic tags, so the web integration cannot infer weak topics. The backend runtime needs Python with pandas installed; configure `PYTHON_EXECUTABLE` if it should use a specific interpreter. See the root README and `backend/README.md` for the endpoint contract and setup details.
+
+Codeforces problem rows in the catalog do include tags. Generate a topic-specific set from `ML/recommendation/` with:
+
+```powershell
+python 02_recommend.py --platform Codeforces --list-topics --json
+python 02_recommend.py --platform Codeforces --topic "dp" --count 5 --json
+```
+
+The topic option matches a catalog tag exactly (case-insensitive). The authenticated web app exposes these tags in its topic generator and separately stores each user's solved problem IDs in MongoDB.
+
+## Package prediction demo
+
+`src/08_predict_package.py` loads `models/preprocessor.joblib` and `models/model_package_v1.joblib` to estimate package in LPA from a student profile. The homepage's Predict LPA action calls this script through `POST /api/predictions/lpa`. The backend Python environment must have the packages in `requirements.txt` installed.
+
+This is an experimental demo trained on synthetic data and placed students only. It predicts package—not placement likelihood—and should not be used as a real-world compensation guarantee.
+
+## Future model work
 
 - **Model A** — Placement Classification (placed / not placed) → `placed` target
-- **Model B** — Package Regression → `package_lpa` target (placed students only)
-
-Both will use XGBoost as the baseline, evaluated with cross-validation.
+- Improve and evaluate **Model B** — Package Regression → `package_lpa` target (placed students only) on representative real student data.

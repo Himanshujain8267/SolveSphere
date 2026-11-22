@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { auth } from '../firebase';
 import { API_BASE_URL } from '../api';
+import ThemeToggle from './ThemeToggle';
 
 const platforms = [
   {
@@ -245,7 +246,7 @@ const PlatformMiniChart = ({ platformId, stats }) => {
   );
 };
 
-const Dashboard = ({ user, onSignOut, isAuthLoading, onEditProfile, onHome, onOpenPreparation }) => {
+const Dashboard = ({ user, onSignOut, isAuthLoading, onEditProfile, onHome, onOpenPreparation, theme, onToggleTheme }) => {
   const [dashboard, setDashboard] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -324,6 +325,7 @@ const Dashboard = ({ user, onSignOut, isAuthLoading, onEditProfile, onHome, onOp
             SolveSphere
           </button>
           <div className="profile-account">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             <span className="profile-account-name">{user.displayName || user.email}</span>
             <span className="dashboard-user-avatar" aria-hidden="true">{userInitial}</span>
             <button type="button" className="profile-signout" onClick={onSignOut} disabled={isAuthLoading}>

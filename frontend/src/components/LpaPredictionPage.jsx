@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { API_BASE_URL } from '../api';
 import { auth } from '../firebase';
+import ThemeToggle from './ThemeToggle';
 
 const requiredFields = [
   { name: 'age', label: 'Age', min: 16, max: 60, step: 1 },
@@ -41,6 +42,8 @@ const LpaPredictionPage = ({
   isAuthLoading,
   isAuthResolved,
   authError,
+  theme,
+  onToggleTheme,
 }) => {
   const [form, setForm] = useState(initialForm);
   const [prediction, setPrediction] = useState(null);
@@ -119,7 +122,10 @@ const LpaPredictionPage = ({
       <header className="profile-topbar">
         <div className="profile-topbar-inner">
           <button type="button" className="profile-brand" onClick={onHome}>SolveSphere</button>
-          <button type="button" className="preparation-nav-button" onClick={onHome}>Back to home</button>
+          <div className="preparation-topbar-actions">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            <button type="button" className="preparation-nav-button" onClick={onHome}>Back to home</button>
+          </div>
         </div>
       </header>
 

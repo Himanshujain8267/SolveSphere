@@ -190,13 +190,14 @@ Copy `backend/.env.example` to `backend/.env`; never commit the resulting file.
 | `FIREBASE_PROJECT_ID` | Firebase project ID used by Firebase Admin. |
 | `FIREBASE_CLIENT_EMAIL` | Service-account email. |
 | `FIREBASE_PRIVATE_KEY` | Service-account private key; preserve newlines as `\n` in an env file. |
-| `FIREBASE_PRIVATE_KEY_ID` | Service-account private-key ID; required by the current initializer. |
+| `FIREBASE_PRIVATE_KEY_ID` | Optional service-account private-key ID. |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Optional alternative to the individual service-account variables: the complete JSON downloaded from Firebase Console > Project settings > Service accounts. |
 | `FIREBASE_TYPE`, `FIREBASE_CLIENT_ID`, `FIREBASE_AUTH_URI`, `FIREBASE_TOKEN_URI`, `FIREBASE_AUTH_PROVIDER_X509_CERT_URL`, `FIREBASE_CLIENT_X509_CERT_URL` | Other service-account fields read by the Firebase Admin initializer. |
 | `NODE_ENV` | Controls whether some API errors include development details. |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed by the API. Defaults to local Vite origins in development; required in production. |
 | `LEETCODE_API_BASE_URL` | Optional override for the LeetCode profile service; defaults to `https://alfa-leetcode-api.onrender.com`. |
 
-The backend initializes Firebase Admin only when the required service-account settings are present. Without them, the server can start, but protected requests return `503`.
+The backend initializes Firebase Admin from either `FIREBASE_SERVICE_ACCOUNT_JSON` or the individual service-account variables. Without valid credentials, the server logs the missing variable names (never credential values), but protected requests return `503`. On Render, set `FIREBASE_SERVICE_ACCOUNT_JSON` on the **solvesphere-api backend service** to the complete service-account JSON, save the environment changes, and redeploy that service. Keep this private key out of the frontend environment and source control.
 
 ### Frontend: `frontend/.env`
 

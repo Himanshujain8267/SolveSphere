@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../firebase';
 import { API_BASE_URL } from '../api';
+import ThemeToggle from './ThemeToggle';
 
 const platforms = [
   { id: 'leetcode', name: 'LeetCode', hint: 'e.g. alex-codes' },
@@ -24,6 +25,8 @@ const ProfileSetup = ({
   onHome,
   onSaved,
   onOpenPreparation,
+  theme,
+  onToggleTheme,
 }) => {
   const [handles, setHandles] = useState(() => readSavedHandles(user.uid));
   const [saveMessage, setSaveMessage] = useState('');
@@ -123,6 +126,7 @@ const ProfileSetup = ({
             SolveSphere
           </button>
           <div className="profile-account">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             <span className="profile-account-name">{user.displayName || user.email}</span>
             <button type="button" className="preparation-nav-button" onClick={onOpenPreparation}>
               Preparation

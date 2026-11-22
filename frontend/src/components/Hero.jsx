@@ -1,4 +1,4 @@
-const Hero = ({ user, onPrimaryAction, onSecondaryAction, onLpaPrediction }) => {
+const Hero = ({ user, onPrimaryAction, onSecondaryAction, onLpaPrediction, onOpenContestCalendar }) => {
   const primaryLabel = user ? 'Go to Workspace' : 'Get Started';
 
   return (
@@ -23,6 +23,9 @@ const Hero = ({ user, onPrimaryAction, onSecondaryAction, onLpaPrediction }) => 
             </button>
             <button type="button" className="secondary-button" onClick={onLpaPrediction}>
               Predict LPA
+            </button>
+            <button type="button" className="secondary-button contest-calendar-button" onClick={onOpenContestCalendar}>
+              Contest Calendar
             </button>
           </div>
 

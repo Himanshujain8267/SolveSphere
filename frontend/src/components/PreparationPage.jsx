@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../firebase';
 import { API_BASE_URL } from '../api';
+import ThemeToggle from './ThemeToggle';
 
 const preparationAreas = [
   {
@@ -47,6 +48,8 @@ const PreparationPage = ({
   onSignIn,
   onSignOut,
   isAuthLoading,
+  theme,
+  onToggleTheme,
 }) => {
   const [plan, setPlan] = useState(null);
   const [planError, setPlanError] = useState(null);
@@ -310,6 +313,7 @@ const PreparationPage = ({
             SolveSphere
           </button>
           <div className="preparation-topbar-actions">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             {user ? (
               <>
                 <button type="button" className="preparation-nav-button" onClick={onEditProfile}>

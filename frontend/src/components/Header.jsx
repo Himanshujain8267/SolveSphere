@@ -1,6 +1,8 @@
-const navItems = ['Home', 'Features', 'Platforms', 'Preparation'];
+import ThemeToggle from './ThemeToggle';
 
-const Header = ({ user, onSignIn, onSignOut, onEditProfile, onOpenWorkspace, onOpenPreparation, isAuthLoading, mobileMenuOpen, setMobileMenuOpen }) => {
+const navItems = ['Home', 'Features', 'Platforms', 'Contest Calendar', 'Preparation'];
+
+const Header = ({ user, onSignIn, onSignOut, onEditProfile, onOpenWorkspace, onOpenPreparation, onOpenContestCalendar, isAuthLoading, mobileMenuOpen, setMobileMenuOpen, theme, onToggleTheme }) => {
   const initials = user?.displayName
     ? user.displayName
         .split(' ')
@@ -17,14 +19,15 @@ const Header = ({ user, onSignIn, onSignOut, onEditProfile, onOpenWorkspace, onO
         </a>
 
         <nav className={`main-nav ${mobileMenuOpen ? 'open' : ''}`} aria-label="Main navigation">
-          {(user ? ['Platform', 'Home', 'Preparation'] : navItems).map((item) => {
+          {(user ? ['Platform', 'Home', 'Contest Calendar', 'Preparation'] : navItems).map((item) => {
             const opensWorkspace = user && item === 'Platform';
             const opensPreparation = item === 'Preparation';
+            const opensContestCalendar = item === 'Contest Calendar';
 
             return (
               <a
                 key={item}
-                href={opensWorkspace ? '/dashboard' : opensPreparation ? '/preparation' : `#${item.toLowerCase()}`}
+                href={opensWorkspace ? '/dashboard' : opensPreparation ? '/preparation' : opensContestCalendar ? '/contest-calendar' : `#${item.toLowerCase()}`}
                 onClick={(event) => {
                   setMobileMenuOpen(false);
                   if (opensWorkspace) {
@@ -33,6 +36,9 @@ const Header = ({ user, onSignIn, onSignOut, onEditProfile, onOpenWorkspace, onO
                   } else if (opensPreparation) {
                     event.preventDefault();
                     onOpenPreparation();
+                  } else if (opensContestCalendar) {
+                    event.preventDefault();
+                    onOpenContestCalendar();
                   }
                 }}
               >
@@ -43,6 +49,7 @@ const Header = ({ user, onSignIn, onSignOut, onEditProfile, onOpenWorkspace, onO
         </nav>
 
         <div className="header-actions">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           {user ? (
             <>
               <button type="button" className="header-add-profile-button" onClick={onEditProfile}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   GoogleAuthProvider,
@@ -23,16 +23,44 @@ import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
 import PreparationPage from './components/PreparationPage';
 import LpaPredictionPage from './components/LpaPredictionPage';
+import ContestCalendarPage from './components/ContestCalendarPage';
 
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('solvesphere-theme') === 'dark' ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      'content',
+      theme === 'dark' ? '#0b1020' : '#f5f7fb',
+    );
+  }, [theme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('solvesphere-theme', theme);
+    } catch {
+      // The in-memory theme still works when browser storage is unavailable.
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));
+  };
 
   useEffect(() => {
     if (!auth) {
@@ -178,6 +206,9 @@ const App = () => {
         onHome={() => navigate('/')}
         onSaved={() => navigate('/dashboard')}
         onOpenPreparation={() => navigate('/preparation')}
+        onOpenContestCalendar={() => navigate('/contest-calendar')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -194,6 +225,8 @@ const App = () => {
         onHome={() => navigate('/')}
         onEditProfile={() => navigate('/profile')}
         onOpenPreparation={() => navigate('/preparation')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -210,6 +243,18 @@ const App = () => {
         onSignIn={handleGoogleAuth}
         onSignOut={handleSignOut}
         isAuthLoading={isLoading}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  if (location.pathname === '/contest-calendar') {
+    return (
+      <ContestCalendarPage
+        onHome={() => navigate('/')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -223,6 +268,8 @@ const App = () => {
         isAuthLoading={isLoading}
         isAuthResolved={isAuthResolved}
         authError={authError}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -239,8 +286,11 @@ const App = () => {
         onEditProfile={() => navigate('/profile')}
         onOpenWorkspace={() => navigate('/dashboard')}
         onOpenPreparation={() => navigate('/preparation')}
+        onOpenContestCalendar={() => navigate('/contest-calendar')}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {authError && <div className="global-alert error">{authError}</div>}
@@ -252,6 +302,7 @@ const App = () => {
           onPrimaryAction={handlePrimaryAction}
           onSecondaryAction={() => scrollToSection('features')}
           onLpaPrediction={() => navigate('/lpa-prediction')}
+          onOpenContestCalendar={() => navigate('/contest-calendar')}
         />
         <FeatureSection />
         <DashboardPreview />

@@ -10,6 +10,53 @@ const PLATFORM_DETAILS = {
   Topcoder: { short: 'TC', color: '#ef4444' },
 };
 
+const createLeetCodeFallbackContests = (now = new Date()) => {
+  const contests = [];
+  const createIstDate = (year, monthIndex, day, hour = 17, minute = 30) => (
+    new Date(Date.UTC(year, monthIndex, day, hour - 5, minute - 30))
+  );
+
+  const nextSunday = new Date(now);
+  nextSunday.setHours(0, 0, 0, 0);
+  const daysUntilSunday = (7 - nextSunday.getDay()) % 7;
+  nextSunday.setDate(nextSunday.getDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
+
+  for (let index = 0; index < 52; index += 1) {
+    const date = new Date(nextSunday);
+    date.setDate(nextSunday.getDate() + (index * 7));
+    const start = createIstDate(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+    contests.push({
+      name: 'LeetCode Weekly Contest',
+      url: 'https://leetcode.com/contest/',
+      startTime: start.toISOString(),
+      endTime: new Date(start.getTime() + (90 * 60 * 1000)).toISOString(),
+      duration: 90 * 60,
+      site: 'LeetCode',
+      in24Hours: false,
+    });
+  }
+
+  for (let index = 0; index < 26; index += 1) {
+    const date = new Date(Date.UTC(2026, 11, 5, 12, 0));
+    date.setUTCDate(date.getUTCDate() + (index * 14));
+    contests.push({
+      name: `LeetCode Biweekly Contest ${197 + index}`,
+      url: 'https://leetcode.com/contest/',
+      startTime: date.toISOString(),
+      endTime: new Date(date.getTime() + (90 * 60 * 1000)).toISOString(),
+      duration: 90 * 60,
+      site: 'LeetCode',
+      in24Hours: false,
+    });
+  }
+
+  return contests;
+};
+
 const sameDay = (a, b) => (
   a.getFullYear() === b.getFullYear()
   && a.getMonth() === b.getMonth()
@@ -87,7 +134,7 @@ const ContestCalendarPage = ({
           }),
         ]);
 
-        const normalized = [];
+        const normalized = createLeetCodeFallbackContests(new Date());
 
         if (codeforcesResult.status === 'fulfilled') {
           const codeforces = codeforcesResult.value?.result || [];
@@ -153,13 +200,15 @@ const ContestCalendarPage = ({
           codechefResult,
           leetcodeResult,
         ].filter((result) => result.status === 'fulfilled').length;
-        if (!successfulSources) throw new Error('The contest schedule could not be loaded.');
+        if (!successfulSources) {
+          setError('Live API updates are unavailable. Recurring LeetCode contests are still shown.');
+        }
 
         const uniqueContests = Array.from(
           new Map(
             normalized
               .filter((contest) => contest.name && contest.startTime)
-              .map((contest) => [`${contest.site}-${contest.name}-${contest.startTime}`, contest])
+              .map((contest) => [`${contest.site}-${contest.startTime}`, contest])
           ).values()
         ).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
         setContests(uniqueContests);
